@@ -1,5 +1,4 @@
-from dataBaseConnection import update_customer_info, update_customer_card_info
-
+from dataBaseConnection import DataBaseConnectionClass
 
 class Customer:
 
@@ -20,7 +19,8 @@ class Customer:
         else:
             self.customer_remaining_daily_limit = (new_limit - self.customer_daily_limit) + self.customer_remaining_daily_limit
             self.customer_daily_limit = new_limit
-            update_customer_info(self.customer_daily_limit, self.customer_remaining_daily_limit, self.customer_no)
+            databaseObject = DataBaseConnectionClass(self.customer_no)
+            databaseObject.update_customer_info(self.customer_daily_limit, self.customer_remaining_daily_limit)
             return True
 
     def update_card_limit(self, new_limit):
@@ -29,7 +29,8 @@ class Customer:
         else:
             self.card_remaining_daily_limit = (new_limit - self.card_daily_limit) + self.card_remaining_daily_limit
             self.card_daily_limit = new_limit
-            update_customer_card_info(self.card_daily_limit, self.card_remaining_daily_limit, self.card_no, self.customer_no)
+            databaseObject = DataBaseConnectionClass(self.customer_no)
+            databaseObject.update_customer_card_info(self.card_daily_limit, self.card_remaining_daily_limit, self.card_no)
             return True
 
     def withdraw_money(self, withdrawn_money):
@@ -47,8 +48,9 @@ class Customer:
                     else:
                         self.card_remaining_daily_limit = self.card_remaining_daily_limit - withdrawn_money
                         self.customer_remaining_daily_limit = self.customer_remaining_daily_limit - withdrawn_money
-                        update_customer_card_info(self.card_daily_limit, self.card_remaining_daily_limit, self.card_no, self.customer_no)
-                        update_customer_info(self.customer_daily_limit, self.customer_remaining_daily_limit, self.customer_no)
+                        databaseObject = DataBaseConnectionClass(self.customer_no)
+                        databaseObject.update_customer_card_info(self.card_daily_limit, self.card_remaining_daily_limit, self.card_no)
+                        databaseObject.update_customer_info(self.customer_daily_limit, self.customer_remaining_daily_limit)
                         # Başarılı durumda güncel limitleri döndür
                         return {
                             "Customer": {

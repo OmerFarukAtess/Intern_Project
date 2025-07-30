@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
-from dataBaseConnection import get_customer_and_card_info
 from customer_class import Customer
+from dataBaseConnection import DataBaseConnectionClass
 
 app = Flask(__name__)
 
@@ -8,7 +8,8 @@ app = Flask(__name__)
 def customer_info():
     data = request.json
     customer_no = data.get("CustomerNo", 0)
-    customer_and_card_info = get_customer_and_card_info(customer_no)
+    dataBaseObject = DataBaseConnectionClass(customer_no)
+    customer_and_card_info = dataBaseObject.get_customer_and_card_info()
 
     if isinstance(customer_and_card_info, dict) and "error" in customer_and_card_info:
         return jsonify({"error": customer_and_card_info["error"]}), 404
@@ -23,7 +24,8 @@ def customer_limit():
     data = request.json
     new_limit = data.get('NewLimit', 0)
     customer_no = data.get('CustomerNo', 0)
-    customer_and_card_info = get_customer_and_card_info(customer_no)
+    databaseObject = DataBaseConnectionClass(customer_no)
+    customer_and_card_info = databaseObject.get_customer_and_card_info()
 
     if not customer_and_card_info:
         return jsonify({"error": "Müşteri bulunamadı veya bilgiler alınamadı"}), 404
@@ -37,7 +39,7 @@ def customer_limit():
 
     if customer_object.update_customer_limit(new_limit):
         # Güncellenmiş müşteri limitini tekrar çekerek döndür (veya Customer objesinden al)
-        current_customer_info = get_customer_and_card_info(customer_no)
+        current_customer_info = databaseObject.get_customer_and_card_info()
         return jsonify({
             "durum": "Müşteri günlük limiti başarıyla güncellendi.",
             "CustomerDailyLimit": current_customer_info["Customer"]["CustomerDailyLimit"],
@@ -52,8 +54,8 @@ def card_limit():
     new_limit = data.get('NewLimit', 0)
     customer_no = data.get('CustomerNo', 0)
     card_no = data.get('CardNo', 0)
-
-    customer_and_card_info = get_customer_and_card_info(customer_no)
+    databaseObject = DataBaseConnectionClass(customer_no)
+    customer_and_card_info = databaseObject.get_customer_and_card_info()
 
     if not customer_and_card_info:
         return jsonify({"error": "Müşteri bulunamadı veya bilgiler alınamadı"}), 404
@@ -78,7 +80,7 @@ def card_limit():
 
     if card_object.update_card_limit(new_limit):
         # Güncellenmiş kart limitini tekrar çekerek döndür (veya Customer objesinden al)
-        current_customer_info = get_customer_and_card_info(customer_no)
+        current_customer_info = databaseObject.get_customer_and_card_info()
         current_customer_card_info = next((kart for kart in current_customer_info['Cards'] if kart['CardNo'] == card_no), None)
         return jsonify({
             "durum": "Kart günlük limiti başarıyla güncellendi.",
@@ -95,8 +97,8 @@ def withdraw_money():
     customer_no = data.get('CustomerNo', 0)
     card_no = data.get('CardNo', 0)
     withdrawn_amount = data.get('WithdrawnAmount', 0)
-
-    customer_and_card_info = get_customer_and_card_info(customer_no)
+    databaseObject = DataBaseConnectionClass(customer_no)
+    customer_and_card_info = databaseObject.get_customer_and_card_info()
 
     if not customer_and_card_info:
         return jsonify({"error": "Müşteri bulunamadı veya bilgiler alınamadı"}), 404
