@@ -1,6 +1,7 @@
 import pyodbc
 
 
+
 class DataBaseConnectionClass:
     def __init__(self,customer_no):
         self.customer_no = customer_no
@@ -13,7 +14,7 @@ class DataBaseConnectionClass:
             cursor = conn.cursor()
 
             # MüşteriLimit'ten bilgileri al
-            cursor.execute("exec CustomerInfo @CustomerNo = ?", self.customer_no)
+            cursor.execute(f"exec CustomerInfo @CustomerNo = {self.customer_no}")
             customer = cursor.fetchone()
 
             # Eğer müşteri bulunamazsa None döndür
@@ -21,8 +22,7 @@ class DataBaseConnectionClass:
                 return {"error": "Müşteri bulunamadı"}
 
             # KartLimit'ten bilgileri al
-            cursor.execute("SELECT CardNo, CardDailyLimit, CardRemainingDailyLimit FROM CardsLimit WHERE CustomerNo=?",
-                           self.customer_no)
+            cursor.execute(f"exec CardInfo @CustomerNo = {self.customer_no}")
             cards = cursor.fetchall()
 
             # Sonuçları dictionary olarak hazırla
@@ -55,8 +55,8 @@ class DataBaseConnectionClass:
             conn = pyodbc.connect(self.conn_str)
             cursor = conn.cursor()
             cursor.execute(
-                "UPDATE CustomersLimit SET CustomerDailyLimit = ?, CustomerRemainingDailyLimit = ? WHERE CustomerNo = ?",
-                new_customer_daily_limit, new_customer_remaing_daily_limit, self.customer_no)
+                f"""exec UpdateCustomerInfo @CustomerNo = {self.customer_no} , @NewCustomerDailyLimit = {new_customer_daily_limit} ,
+                @NewCustomerRemainingDailyLimit = {new_customer_remaing_daily_limit}""")
             conn.commit()
 
             return True
@@ -76,8 +76,8 @@ class DataBaseConnectionClass:
             cursor = conn.cursor()
 
             cursor.execute(
-                "UPDATE CardsLimit SET CardDailyLimit = ?, CardRemainingDailyLimit = ? WHERE CustomerNo = ? AND CardNo = ?",
-                new_card_daily_limit, new_card_kalan_daily_limit, self.customer_no, card_no)
+                f"""exec UpdoteCustomerCardsInfo @CustomerNo = {self.customer_no} , @CardNo = {card_no},
+                @NewCustomerCardDailyLimit = {new_card_daily_limit} ,@NewCustomerRemainingCardDailyLimit = {new_card_kalan_daily_limit} """)
             conn.commit()
             return True
         except Exception as e:

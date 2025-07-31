@@ -33,7 +33,7 @@ def musteri_bilgileri_goster(data):
         st.write(f"Kart No: {kart['CardNo']}")
         if float(kart['CardDailyLimit']) > float(data['Customer']['CustomerDailyLimit']):
             st.write(f"Kart Günlük Limit: {data['Customer']['CustomerDailyLimit']}")
-            if float(kart["CardRemainingDailyLimit"]) < 0:
+            if float(kart["CardRemainingDailyLimit"]) < 0 or float(data["Customer"]["CustomerDailyLimit"]) <= 0:
                 st.write("Kart Kalan Günlük Limit: 0.00")
             else:
                 st.write(f"Kart Kalan Günlük Limit: {float(data['Customer']['CustomerDailyLimit'])-(float(kart['CardDailyLimit'])-float(kart['CardRemainingDailyLimit']))}")
