@@ -1,4 +1,5 @@
 import pyodbc
+from datetime import datetime ,date
 
 
 
@@ -70,9 +71,8 @@ class DataBaseConnectionClass:
 
 
     def update_customer_card_info(self,new_card_daily_limit, new_card_kalan_daily_limit, card_no):
-        conn_str = r'DRIVER={SQL Server};SERVER=DESKTOP-7PPE35F\MSSQLSERVER1;DATABASE=VakıfBank;Trusted_Connection=yes;'
         try:
-            conn = pyodbc.connect(conn_str)
+            conn = pyodbc.connect(self.conn_str)
             cursor = conn.cursor()
 
             cursor.execute(
@@ -82,6 +82,53 @@ class DataBaseConnectionClass:
             return True
         except Exception as e:
             return {"error": f"Kart limiti güncellenirken bir hata oluştu: {e}"}
+        finally:
+            if 'conn' in locals():
+                conn.close()
+
+
+    def last_withdrawn_time_update(self):
+        try:
+            conn = pyodbc.connect(self.conn_str)
+            cursor = conn.cursor()
+
+            cursor.execute(
+                f"exec UpdateLastTransactionTime @CustomerNo = {self.customer_no}")
+            conn.commit()
+            return True
+        except Exception as e:
+            return {"error": f"Bir hata oluştu: {e}"}
+        finally:
+            if 'conn' in locals():
+                conn.close()
+
+    def reset_limit(self):
+        try:
+            conn = pyodbc.connect(self.conn_str)
+            cursor = conn.cursor()
+
+            cursor.execute(
+                f"select LastTransaction from LastTransactions where CustomerNo = {self.customer_no}"
+            )
+            result = cursor.fetchone()
+            last_transaction = result[0]
+            today = date.today()
+
+            if isinstance(last_transaction, str):
+                last_transaction = datetime.strptime(last_transaction, "%Y-%m-%d").date()
+            elif isinstance(last_transaction, datetime):
+                last_transaction = last_transaction.date()
+
+            if last_transaction < today:
+                cursor.execute(
+                    f"""exec ResetCustomerLimit @CustomerNo = {self.customer_no}
+                        exec ResetCustomerCardLimit @CustomerNo = {self.customer_no}"""
+                    )
+                conn.commit()
+                return True
+
+        except Exception as e:
+            return {"error": f"Bir hata oluştu: {e}"}
         finally:
             if 'conn' in locals():
                 conn.close()

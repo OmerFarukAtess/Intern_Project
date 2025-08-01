@@ -51,6 +51,7 @@ class Customer:
                         databaseObject = DataBaseConnectionClass(self.customer_no)
                         databaseObject.update_customer_card_info(self.card_daily_limit, self.card_remaining_daily_limit, self.card_no)
                         databaseObject.update_customer_info(self.customer_daily_limit, self.customer_remaining_daily_limit)
+                        databaseObject.last_withdrawn_time_update()
                         # Başarılı durumda güncel limitleri döndür
                         return {
                             "Customer": {

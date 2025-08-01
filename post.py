@@ -10,6 +10,8 @@ def customer_info():
     customer_no = data.get("CustomerNo", 0)
     database_object = DataBaseConnectionClass(customer_no)
     customer_and_card_info = database_object.get_customer_and_card_info()
+    if database_object.reset_limit():
+        customer_and_card_info = database_object.get_customer_and_card_info()
 
     if isinstance(customer_and_card_info, dict) and "error" in customer_and_card_info:
         return jsonify({"error": customer_and_card_info["error"]}), 404
