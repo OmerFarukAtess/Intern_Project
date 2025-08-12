@@ -9,6 +9,71 @@ class DataBaseConnectionClass:
         self.conn_str = r'DRIVER={SQL Server};SERVER=FARUK\SQLEXPRESS;DATABASE=VakıfBank;Trusted_Connection=yes;'
 
 
+    def get_customer_info(self):
+        try:
+            conn = pyodbc.connect(self.conn_str)
+            cursor = conn.cursor()
+
+            # MüşteriLimit'ten bilgileri al
+            cursor.execute(f"exec CustomerInfo @CustomerNo = {self.customer_no}")
+            customer = cursor.fetchone()
+
+            # Eğer müşteri bulunamazsa None döndür
+            if not customer:
+                return {"error": "Müşteri bulunamadı"}
+
+            # KartLimit'ten bilgileri al
+            cursor.execute(f"exec CardInfo @CustomerNo = {self.customer_no}")
+            cards = cursor.fetchall()
+            total_spend = 0
+            for temp_card in cards:
+                total_spend += float(temp_card.CardDailySpend)
+
+            # Sonuçları dictionary olarak hazırla
+            result = {
+                "Customer": {
+                    "CustomerNo": customer.CustomerNo,
+                    "CustomerDailyLimit": customer.CustomerDailyLimit,
+                    "CustomerRemainingDailyLimit" : str((float(customer.CustomerDailyLimit) - total_spend))
+                }
+            }
+
+            return result
+
+        except Exception as e:
+            return f"error: {e}"
+        finally:
+            if 'conn' in locals():
+                conn.close()
+
+
+    def get_card_info(self):
+        try:
+            conn = pyodbc.connect(self.conn_str)
+            cursor = conn.cursor()
+
+            cursor.execute(f"exec CardInfo @CustomerNo = {self.customer_no}")
+            cards = cursor.fetchall()
+
+            if not cards:
+                return {"error": "Müşteri kartları bulunamadı"}
+
+            result = {
+                "Cards": [
+                    {
+                        "CardNo": card.CardNo,
+                        "CardDailyLimit": card.CardDailyLimit,
+                        "CardRemainingDailyLimit": card.CardDailyLimit - card.CardDailySpend
+                    } for card in cards
+                ]
+            }
+            return result
+        except Exception as e:
+            return f"error: {e}"
+        finally:
+            if 'conn' in locals():
+                conn.close()
+
     def get_customer_and_card_info(self):
         try:
             conn = pyodbc.connect(self.conn_str)
@@ -25,6 +90,9 @@ class DataBaseConnectionClass:
             # KartLimit'ten bilgileri al
             cursor.execute(f"exec CardInfo @CustomerNo = {self.customer_no}")
             cards = cursor.fetchall()
+            total_spend = 0
+            for temp_card in cards:
+                total_spend += float(temp_card.CardDailySpend)
 
             # Sonuçları dictionary olarak hazırla
             result = {
@@ -44,11 +112,10 @@ class DataBaseConnectionClass:
             return result
 
         except Exception as e:
-            return f"Error: {e}"
+            return f"error: {e}"
         finally:
             if 'conn' in locals():
                 conn.close()
-
 
     def update_customer_info(self,new_customer_daily_limit):
         try:
@@ -61,14 +128,13 @@ class DataBaseConnectionClass:
             return True
 
         except Exception as e:
-            print(f"Müşteri limiti güncellenirken hata: {e}")
             return {"error": f"Müşteri limiti güncellenirken bir hata oluştu: {e}"}
         finally:
             if 'conn' in locals():
                 conn.close()
 
 
-    def update_customer_card_info(self,new_card_daily_limit, card_no,new_card_daily_spend = None):
+    def update_card_info(self, new_card_daily_limit, card_no, new_card_daily_spend = None):
         try:
             conn = pyodbc.connect(self.conn_str)
             cursor = conn.cursor()
